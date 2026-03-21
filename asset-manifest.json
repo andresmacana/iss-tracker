@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/iss-tracker/static/css/main.5e59d6c9.css",
+    "main.js": "/iss-tracker/static/js/main.d62bb8cb.js",
+    "index.html": "/iss-tracker/index.html",
+    "main.5e59d6c9.css.map": "/iss-tracker/static/css/main.5e59d6c9.css.map",
+    "main.d62bb8cb.js.map": "/iss-tracker/static/js/main.d62bb8cb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5e59d6c9.css",
+    "static/js/main.d62bb8cb.js"
+  ]
+}
