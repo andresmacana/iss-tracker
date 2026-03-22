@@ -4,18 +4,12 @@ import "./App.css";
 
 const MTL_COORDS = [45.5017, -73.5673];
 
-const issIcon = L.icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/2026/2026462.png", // Icono de satélite
-  iconSize: [40, 40], // Tamaño del icono [ancho, alto]
-  iconAnchor: [20, 20], // Punto del icono que corresponde a la ubicación (mitad del tamaño)
-  popupAnchor: [0, -20], // Punto desde donde se abrirá el popup (si usas uno)
-});
-
 function App() {
   const mapRef = useRef(null);
   const issMarkerRef = useRef(null);
   const pathRef = useRef(null);
 
+  const [autoTrack, setAutoTrack] = useState(true); // Control de seguimiento
   const [data, setData] = useState({
     lat: 0,
     lon: 0,
@@ -24,10 +18,9 @@ function App() {
     alt: 0,
     status: "SINCRONIZANDO...",
   });
-
   const [times, setTimes] = useState({ mtl: "", utc: "" });
 
-  // Lógica de Relojes
+  // Relojes
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -45,12 +38,12 @@ function App() {
   // Inicialización del Mapa
   useEffect(() => {
     if (!mapRef.current) {
-      const map = L.map("map", { zoomControl: false }).setView([20, -20], 2);
-
+      const map = L.map("map", { zoomControl: false }).setView([20, -20], 3);
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
       ).addTo(map);
 
+      // Marcador Montreal
       L.circleMarker(MTL_COORDS, {
         radius: 7,
         fillColor: "#ff3131",
@@ -59,8 +52,9 @@ function App() {
         fillOpacity: 1,
       })
         .addTo(map)
-        .bindTooltip("MTL HQ");
+        .bindTooltip("MONTREAL HQ", { permanent: false });
 
+      // Marcador ISS y Trayectoria
       issMarkerRef.current = L.circleMarker([0, 0], {
         radius: 10,
         fillColor: "#00f2ff",
@@ -74,12 +68,10 @@ function App() {
         weight: 2,
         opacity: 0.5,
       }).addTo(map);
-
       mapRef.current = map;
     }
   }, []);
 
-  // Función Haversine
   const calcDist = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -92,19 +84,21 @@ function App() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // Petición a la API
   const updateISS = async () => {
     try {
       const res = await fetch("https://api.wheretheiss.at/v1/satellites/25544");
       if (!res.ok) throw new Error("API Limit");
-
       const json = await res.json();
       const { latitude, longitude, velocity, altitude } = json;
 
-      // Actualizar Mapa mediante Refs
       const pos = [latitude, longitude];
       if (issMarkerRef.current) issMarkerRef.current.setLatLng(pos);
       if (pathRef.current) pathRef.current.addLatLng(pos);
+
+      // LÓGICA DE AUTO-TRACK
+      if (autoTrack && mapRef.current) {
+        mapRef.current.panTo(pos, { animate: true, duration: 1.5 });
+      }
 
       const d = calcDist(latitude, longitude, MTL_COORDS[0], MTL_COORDS[1]);
 
@@ -125,19 +119,28 @@ function App() {
     updateISS();
     const apiInterval = setInterval(updateISS, 5000);
     return () => clearInterval(apiInterval);
-  }, []);
+  }, [autoTrack]); // Se reinicia si cambia el modo de rastreo
 
   return (
     <div className="app-container">
       <header>
-        <h1 style={{ fontSize: "1rem" }}>🛰️ ISS TRACKER // NODE: MONTREAL</h1>
-        <div style={{ textAlign: "right", fontSize: "0.9rem" }}>
+        <h1>🛰️ ISS STRATCOM // NODE: MONTREAL</h1>
+        <div style={{ textAlign: "right" }}>
           <div style={{ color: "var(--mtl)" }}>MTL: {times.mtl}</div>
           <div style={{ color: "#fff", fontSize: "0.7rem" }}>
             UTC: {times.utc}
           </div>
         </div>
       </header>
+
+      <div className="map-controls">
+        <button
+          className={`btn-track ${autoTrack ? "active" : ""}`}
+          onClick={() => setAutoTrack(!autoTrack)}
+        >
+          {autoTrack ? "AUTO-TRACK: ON" : "AUTO-TRACK: OFF"}
+        </button>
+      </div>
 
       <div id="map"></div>
 

@@ -1,38 +1,111 @@
-.App {
-  text-align: center;
+:root {
+  --neon: #00f2ff;
+  --mtl: #ff3131;
+  --bg: #0d1117;
+  --panel: #161b22;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--neon);
+  font-family: "Courier New", monospace;
+  overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.app-container {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  height: 60px;
+  background: var(--panel);
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  padding: 0 20px;
+  border-bottom: 2px solid var(--neon);
+  z-index: 1000;
+}
+
+#map {
+  flex-grow: 1;
+  width: 100vw;
+  background: #111;
+}
+
+/* ... (mantener lo anterior) ... */
+
+.map-controls {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.btn-track {
+  background: var(--panel);
+  color: var(--neon);
+  border: 1px solid var(--neon);
+  padding: 10px 15px;
+  font-family: "Courier New", monospace;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+}
+
+.btn-track.active {
+  background: var(--neon);
+  color: var(--bg);
+  box-shadow: 0 0 20px var(--neon);
+}
+
+.btn-track:hover {
+  transform: scale(1.05);
+}
+
+.dashboard {
+  height: 100px;
+  display: flex;
+  background: var(--panel);
+  border-top: 1px solid #30363d;
+  z-index: 1000;
+}
+
+.data-box {
+  flex: 1;
+  text-align: center;
+  border-left: 1px solid #30363d;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+}
+
+.data-box:first-child {
+  border-left: none;
+}
+
+.label {
+  font-size: 0.65rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.value {
+  font-size: 1.1rem;
+  font-weight: bold;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.warning {
+  color: #e3b341;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.online {
+  color: #4ade80;
 }

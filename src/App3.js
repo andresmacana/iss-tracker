@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css"; // Asegúrate de tener esta importación para que el mapa se vea bien
 import "./App.css";
-
+import issLogo from "./images/iss1.png";
+// Coordenadas de referencia (Montreal)
 const MTL_COORDS = [45.5017, -73.5673];
 
+// Configuración del Icono del Satélite
 const issIcon = L.icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/2026/2026462.png", // Icono de satélite
-  iconSize: [40, 40], // Tamaño del icono [ancho, alto]
-  iconAnchor: [20, 20], // Punto del icono que corresponde a la ubicación (mitad del tamaño)
-  popupAnchor: [0, -20], // Punto desde donde se abrirá el popup (si usas uno)
+  /*iconUrl: "https://www.flaticon.com/free-icon/station_13426427.png  ", //"https://cdn-icons-png.flaticon.com/512/3344/3344338.png", 2026/2026462.png*/
+  iconUrl: issLogo,
+  iconSize: [25, 25],
+  iconAnchor: [22, 22], // Centrado del icono
 });
 
 function App() {
@@ -27,7 +30,7 @@ function App() {
 
   const [times, setTimes] = useState({ mtl: "", utc: "" });
 
-  // Lógica de Relojes
+  // --- LÓGICA DE RELOJES (MTL y UTC) ---
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -42,15 +45,21 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Inicialización del Mapa
+  // --- INICIALIZACIÓN DEL MAPA ---
   useEffect(() => {
     if (!mapRef.current) {
-      const map = L.map("map", { zoomControl: false }).setView([20, -20], 2);
+      // Crear instancia del mapa
+      const map = L.map("map", {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([20, -20], 2);
 
+      // Capa de mapa (CartoDB Voyager)
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
       ).addTo(map);
 
+      // Marcador Estático: Montreal HQ
       L.circleMarker(MTL_COORDS, {
         radius: 7,
         fillColor: "#ff3131",
@@ -59,16 +68,12 @@ function App() {
         fillOpacity: 1,
       })
         .addTo(map)
-        .bindTooltip("MTL HQ");
+        .bindTooltip("MTL HQ", { permanent: false });
 
-      issMarkerRef.current = L.circleMarker([0, 0], {
-        radius: 10,
-        fillColor: "#00f2ff",
-        color: "#fff",
-        weight: 3,
-        fillOpacity: 0.8,
-      }).addTo(map);
+      // Marcador Dinámico: ISS (Con el nuevo icono)
+      issMarkerRef.current = L.marker([0, 0], { icon: issIcon }).addTo(map);
 
+      // Línea de trayectoria (Path)
       pathRef.current = L.polyline([], {
         color: "#00f2ff",
         weight: 2,
@@ -79,9 +84,9 @@ function App() {
     }
   }, []);
 
-  // Función Haversine
+  // --- CÁLCULO DE DISTANCIA (Fórmula de Haversine) ---
   const calcDist = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
+    const R = 6371; // Radio de la Tierra en km
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
@@ -92,7 +97,7 @@ function App() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // Petición a la API
+  // --- PETICIÓN A LA API Y ACTUALIZACIÓN ---
   const updateISS = async () => {
     try {
       const res = await fetch("https://api.wheretheiss.at/v1/satellites/25544");
@@ -101,8 +106,9 @@ function App() {
       const json = await res.json();
       const { latitude, longitude, velocity, altitude } = json;
 
-      // Actualizar Mapa mediante Refs
       const pos = [latitude, longitude];
+
+      // Actualizar posición del marcador y la línea sin re-renderizar todo el componente
       if (issMarkerRef.current) issMarkerRef.current.setLatLng(pos);
       if (pathRef.current) pathRef.current.addLatLng(pos);
 
@@ -123,24 +129,27 @@ function App() {
 
   useEffect(() => {
     updateISS();
-    const apiInterval = setInterval(updateISS, 5000);
+    const apiInterval = setInterval(updateISS, 5000); // Actualiza cada 5 segundos
     return () => clearInterval(apiInterval);
   }, []);
 
   return (
     <div className="app-container">
+      {/* Header con Relojes */}
       <header>
         <h1 style={{ fontSize: "1rem" }}>🛰️ ISS TRACKER // NODE: MONTREAL</h1>
         <div style={{ textAlign: "right", fontSize: "0.9rem" }}>
-          <div style={{ color: "var(--mtl)" }}>MTL: {times.mtl}</div>
+          <div style={{ color: "#00f2ff" }}>MTL: {times.mtl}</div>
           <div style={{ color: "#fff", fontSize: "0.7rem" }}>
             UTC: {times.utc}
           </div>
         </div>
       </header>
 
+      {/* Contenedor del Mapa de Leaflet */}
       <div id="map"></div>
 
+      {/* Panel de Datos (Dashboard) */}
       <div className="dashboard">
         <div className="data-box">
           <div className="label">Coordenadas ISS</div>
@@ -154,7 +163,7 @@ function App() {
         </div>
         <div className="data-box">
           <div className="label">Distancia a Montreal</div>
-          <div className="value" style={{ color: "var(--mtl)" }}>
+          <div className="value" style={{ color: "#00f2ff" }}>
             {data.dist} km
           </div>
         </div>
